@@ -930,7 +930,12 @@ void DW1000RangingClass::receiver() {
  * ######################################################################### */
 
 
-void DW1000RangingClass::computeRangeAsymmetric(DW1000Device* myDistantDevice, DW1000Time* myTOF) {
+void DW1000RangingClass::computeRangeAsymmetric(DW1000Device* myDistantDevice, DW1000Time* myTOF)
+{
+#if DEBUG
+	auto startTime = micros();
+#endif
+
 	// asymmetric two-way ranging (more computation intense, less error prone)
 	DW1000Time round1 = (myDistantDevice->timePollAckReceived-myDistantDevice->timePollSent).wrap();
 	DW1000Time reply1 = (myDistantDevice->timePollAckSent-myDistantDevice->timePollReceived).wrap();
@@ -938,6 +943,13 @@ void DW1000RangingClass::computeRangeAsymmetric(DW1000Device* myDistantDevice, D
 	DW1000Time reply2 = (myDistantDevice->timeRangeSent-myDistantDevice->timePollAckReceived).wrap();
 	
 	myTOF->setTimestamp((round1*round2-reply1*reply2)/(round1+round2+reply1+reply2));
+
+#if DEBUG
+	auto endTime = micros();
+	Serial.print("computeRangeAsymmetric: ");
+	Serial.print(endTime-startTime);
+	Serial.println(" microseconds");
+#endif
 	/*
 	Serial.print("timePollAckReceived ");myDistantDevice->timePollAckReceived.print();
 	Serial.print("timePollSent ");myDistantDevice->timePollSent.print();
