@@ -877,6 +877,15 @@ void DW1000Class::writeTransmitFrameControlRegister() {
 	writeBytes(TX_FCTRL, NO_SUB, _txfctrl, LEN_TX_FCTRL);
 }
 
+void DW1000Class::writeAntennaDelayRegister() {
+	byte antennaDelayBytes[DW1000Time::LENGTH_TIMESTAMP];
+
+	_antennaDelay.getTimestamp(antennaDelayBytes);
+
+	writeBytes(TX_ANTD, NO_SUB, antennaDelayBytes, LEN_TX_ANTD);
+	writeBytes(LDE_IF, LDE_RXANTD_SUB, antennaDelayBytes, LEN_LDE_RXANTD);
+}
+
 /* ###########################################################################
  * #### DW1000 operation functions ###########################################
  * ######################################################################### */
@@ -1080,11 +1089,7 @@ void DW1000Class::commitConfiguration() {
 	tune();
 	// TODO clean up code + antenna delay/calibration API
 	// TODO setter + check not larger two bytes integer
-	byte antennaDelayBytes[LEN_STAMP];
-	writeValueToBytes(antennaDelayBytes, 16384, LEN_STAMP);
-	_antennaDelay.setTimestamp(antennaDelayBytes);
-	writeBytes(TX_ANTD, NO_SUB, antennaDelayBytes, LEN_TX_ANTD);
-	writeBytes(LDE_IF, LDE_RXANTD_SUB, antennaDelayBytes, LEN_LDE_RXANTD);
+	writeAntennaDelayRegister();
 }
 
 void DW1000Class::waitForResponse(boolean val) {
@@ -1544,6 +1549,16 @@ float DW1000Class::getReceivePower() {
 		estRxPwr += (estRxPwr+88)*corrFac;
 	}
 	return estRxPwr;
+}
+
+void DW1000Class::setAntennaDelay(const uint16_t value) {
+	_antennaDelay.setTimestamp(value);
+}
+
+uint16_t DW1000Class::getAntennaDelay() {
+	uint16_t antennaDelay;
+	antennaDelay = static_cast<uint16_t>(_antennaDelay.getTimestamp());
+	return antennaDelay;
 }
 
 /* ###########################################################################
