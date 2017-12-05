@@ -39,6 +39,7 @@
 #define RANGE_FAILED 255
 #define BLINK 4
 #define RANGING_INIT 5
+#define ANTENNA_DELAY 6
 
 #define LEN_DATA 90
 
@@ -131,6 +132,7 @@ private:
 	static DW1000Mac    _globalMac;
 	static int32_t      timer;
 	static int16_t      counterForBlink;
+	static uint8_t      counterForAntennaDelay;
 	
 	//Handlers:
 	static void (* _handleNewRange)(void);
@@ -192,6 +194,7 @@ private:
 	static void transmitPollAck(DW1000Device* myDistantDevice);
 	static void transmitRangeReport(DW1000Device* myDistantDevice);
 	static void transmitRangeFailed(DW1000Device* myDistantDevice);
+	static void transmitAntennaDelay();
 	static void receiver();
 	
 	//for ranging protocole (TAG)

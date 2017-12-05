@@ -62,6 +62,7 @@ boolean          DW1000RangingClass::_protocolFailed = false;
 // timestamps to remember
 int32_t            DW1000RangingClass::timer           = 0;
 int16_t            DW1000RangingClass::counterForBlink = 0; // TODO 8 bit?
+uint8_t            DW1000RangingClass::counterForAntennaDelay = 0;
 
 
 // data buffer
@@ -360,6 +361,9 @@ int16_t DW1000RangingClass::detectMessageType(byte datas[]) {
 	if(datas[0] == FC_1_BLINK) {
 		return BLINK;
 	}
+	if(datas[0] == FC_1_ANTENNA_DELAY) {
+		return ANTENNA_DELAY;
+	}
 	else if(datas[0] == FC_1 && datas[1] == FC_2) {
 		//we have a long MAC frame message (ranging init)
 		return datas[LONG_MAC_LEN];
@@ -463,6 +467,13 @@ void DW1000RangingClass::loop() {
 				noteActivity();
 			}
 			_expectedMsgId = POLL;
+		}
+		else if(messageType == ANTENNA_DELAY && _type == ANCHOR) {
+			byte antennaDelay[2];
+			_globalMac.decodeAntennaDelayFrame(data, antennaDelay);
+
+			// TODO: Convert array to uint16_t
+			// TODO: Set the new antenna delay
 		}
 		else if(messageType == RANGING_INIT && _type == TAG) {
 			
@@ -731,9 +742,22 @@ void DW1000RangingClass::timerTick() {
 		//check for inactive devices if we are a TAG or ANCHOR
 		checkForInactiveDevices();
 	}
+
 	counterForBlink++;
 	if(counterForBlink > 20) {
 		counterForBlink = 0;
+	}
+
+	// TODO: Is it okay to transmitAntennaDelay directly after transmitBlink?
+	if(counterForAntennaDelay == 0) {
+		if(_type == TAG) {
+			transmitAntennaDelay();
+		}
+	}
+
+	counterForAntennaDelay++;
+	if(counterForAntennaDelay > 10) {
+		counterForAntennaDelay = 0;
 	}
 }
 
@@ -913,6 +937,21 @@ void DW1000RangingClass::transmitRangeFailed(DW1000Device* myDistantDevice) {
 	data[SHORT_MAC_LEN] = RANGE_FAILED;
 	
 	copyShortAddress(_lastSentToShortAddress, myDistantDevice->getByteShortAddress());
+	transmit(data);
+}
+
+void DW1000RangingClass::transmitAntennaDelay() {
+	transmitInit();
+	const uint16_t antennaDelay = DW1000.getAntennaDelay();
+	const uint8_t array_size = 2;
+
+	// TODO: Create a function that translate between primitive data types and byte arrays!
+	byte antennaDelayBytes[array_size];
+	memset(antennaDelayBytes, 0, array_size);
+	for(uint8_t i = 0; i < array_size; i++) {
+		antennaDelayBytes[i] = (byte)((antennaDelay >> (i*8)) & 0xFF);
+	}
+	_globalMac.generateAntennaDelayFrame(data, antennaDelayBytes);
 	transmit(data);
 }
 

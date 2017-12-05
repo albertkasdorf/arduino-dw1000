@@ -112,6 +112,22 @@ void DW1000Mac::generateLongMACFrame(byte frame[], byte sourceShortAddress[], by
 	incrementSeqNumber();
 }
 
+void DW1000Mac::generateAntennaDelayFrame(byte frame[], byte antennaDelay[]){
+	//Frame Control
+	*frame = FC_1_ANTENNA_DELAY;
+
+	//sequence number
+	*(frame+1) = _seqNumber;
+
+	//antenna delay -- reverse
+	byte antennaDelayReverse[2];
+	reverseArray(antennaDelayReverse, antennaDelay, 2);
+	memcpy(frame+2, antennaDelayReverse, 2);
+
+	//we increment seqNumber
+	incrementSeqNumber();
+}
+
 
 void DW1000Mac::decodeBlinkFrame(byte frame[], byte address[], byte shortAddress[]) {
 	//we save the long address of the sender into the device. -- reverse direction
@@ -142,6 +158,11 @@ void DW1000Mac::decodeLongMACFrame(byte frame[], byte address[]) {
 	//memcpy(destinationAddress, frame+5, 8);
 }
 
+void DW1000Mac::decodeAntennaDelayFrame(byte frame[], byte antennaDelay[]){
+	byte reverseAntennaDelay[2];
+	memcpy(reverseAntennaDelay, frame+2, 2);
+	reverseArray(antennaDelay, reverseAntennaDelay, 2);
+}
 
 void DW1000Mac::incrementSeqNumber() {
 	// normally overflow of uint8 automatically resets to 0 if over 255

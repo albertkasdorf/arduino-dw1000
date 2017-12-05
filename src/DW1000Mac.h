@@ -27,6 +27,8 @@
 #define FC_2 0x8C
 #define FC_2_SHORT 0x88
 
+#define FC_1_ANTENNA_DELAY 0xC6
+
 #define PAN_ID_1 0xCA
 #define PAN_ID_2 0xDE
 
@@ -70,11 +72,16 @@ public:
 	//8 bytes for Destination Address and 2 bytes for Source Address
 	//total of
 	void generateLongMACFrame(byte frame[], byte sourceShortAddress[], byte destinationAddress[]);
+
+	//for antenna delay we use just 2 bytes
+	//total=4 bytes
+	void generateAntennaDelayFrame(byte frame[], byte antennaDelay[]);
 	
 	//in order to decode the frame and save source Address!
 	void decodeBlinkFrame(byte frame[], byte address[], byte shortAddress[]);
 	void decodeShortMACFrame(byte frame[], byte address[]);
 	void decodeLongMACFrame(byte frame[], byte address[]);
+	void decodeAntennaDelayFrame(byte frame[], byte antennaDelay[]);
 	
 	void incrementSeqNumber();
 
