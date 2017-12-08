@@ -261,7 +261,7 @@ public:
 	static float getReceiveQuality();
 
 	/* antenna delay configguration */
-	static void setAntennaDelay(const uint16_t value);
+	static void setAntennaDelay(const uint16_t& value);
 	static uint16_t getAntennaDelay();
 	
 	/* interrupt management. */
@@ -572,6 +572,23 @@ public:
 	static constexpr byte BIAS_900_16[] = {137, 122, 105, 88, 69, 47, 25, 0, 21, 48, 79, 105, 127, 147, 160, 169, 178, 197};
 	static constexpr byte BIAS_900_64[] = {147, 133, 117, 99, 75, 50, 29, 0, 24, 45, 63, 76, 87, 98, 116, 122, 132, 142};
 	
+	/* More Helper Function */
+	template<typename T>
+	static void fundamental_to_bytes( const T& value, byte data[] ) {
+		const auto sizeOfT = sizeof( T );
+		for( auto i = 0; i < sizeOfT; i++ ) {
+			data[i] = (value >> (i * 8)) & 0xFF;
+		}
+	}
+
+	template<typename T>
+	static void bytes_to_fundamental( const byte data[], T& value ) {
+		const auto sizeOfT = sizeof( T );
+		for( auto i = 0; i < sizeOfT; i++ ) {
+			value <<= 8;
+			value |= data[(sizeOfT - 1) - i];
+		}
+	}
 };
 
 extern DW1000Class DW1000;

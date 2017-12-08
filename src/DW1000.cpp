@@ -1551,7 +1551,7 @@ float DW1000Class::getReceivePower() {
 	return estRxPwr;
 }
 
-void DW1000Class::setAntennaDelay(const uint16_t value) {
+void DW1000Class::setAntennaDelay(const uint16_t& value) {
 	_antennaDelay.setTimestamp(value);
 }
 

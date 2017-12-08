@@ -382,6 +382,15 @@ void DW1000RangingClass::loop() {
 		timer = time;
 		timerTick();
 	}
+
+	if( _type == TAG) {
+		 const auto availableBytes = Serial.available();
+		 if(availableBytes>0) {
+			uint16_t antennaDelay = Serial.parseInt();
+			DW1000.setAntennaDelay(antennaDelay);
+			DW1000.writeAntennaDelayRegister();
+		}
+	}
 	
 	if(_sentAck) {
 		_sentAck = false;
@@ -469,11 +478,21 @@ void DW1000RangingClass::loop() {
 			_expectedMsgId = POLL;
 		}
 		else if(messageType == ANTENNA_DELAY && _type == ANCHOR) {
-			byte antennaDelay[2];
-			_globalMac.decodeAntennaDelayFrame(data, antennaDelay);
+			byte antennaDelayBytes[2] = {};
+			uint16_t antennaDelay = {};
 
-			// TODO: Convert array to uint16_t
-			// TODO: Set the new antenna delay
+			_globalMac.decodeAntennaDelayFrame(data, antennaDelayBytes);
+
+			// Convert array to uint16_t
+			DW1000.bytes_to_fundamental(antennaDelayBytes, antennaDelay);
+			Serial.print("New Antenna Delay: ");
+			Serial.println(antennaDelay, DEC);
+
+			// Set the new antenna delay
+			DW1000.setAntennaDelay(antennaDelay);
+			DW1000.writeAntennaDelayRegister();
+
+			noteActivity();
 		}
 		else if(messageType == RANGING_INIT && _type == TAG) {
 			
@@ -504,12 +523,12 @@ void DW1000RangingClass::loop() {
 			if((_networkDevicesNumber != 0) && (myDistantDevice == NULL)) {
 				Serial.println("Not found");
 				//we don't have the short address of the device in memory
-				/*
+				/**/
 				Serial.print("unknown: ");
 				Serial.print(address[0], HEX);
 				Serial.print(":");
 				Serial.println(address[1], HEX);
-				*/
+				/**/
 				return;
 			}
 			
@@ -943,14 +962,10 @@ void DW1000RangingClass::transmitRangeFailed(DW1000Device* myDistantDevice) {
 void DW1000RangingClass::transmitAntennaDelay() {
 	transmitInit();
 	const uint16_t antennaDelay = DW1000.getAntennaDelay();
-	const uint8_t array_size = 2;
+	const uint8_t array_size = sizeof(uint16_t);
+	byte antennaDelayBytes[array_size] = { };
 
-	// TODO: Create a function that translate between primitive data types and byte arrays!
-	byte antennaDelayBytes[array_size];
-	memset(antennaDelayBytes, 0, array_size);
-	for(uint8_t i = 0; i < array_size; i++) {
-		antennaDelayBytes[i] = (byte)((antennaDelay >> (i*8)) & 0xFF);
-	}
+	DW1000.fundamental_to_bytes(antennaDelay, antennaDelayBytes);
 	_globalMac.generateAntennaDelayFrame(data, antennaDelayBytes);
 	transmit(data);
 }
